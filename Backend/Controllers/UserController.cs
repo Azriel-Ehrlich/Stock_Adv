@@ -1,5 +1,6 @@
 ﻿using Backend.Models;
 using Backend.Services;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Backend.Controllers
@@ -122,6 +123,40 @@ namespace Backend.Controllers
 
             return Ok(user);
         }
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            try
+            {
+                // Verify the Firebase ID token
+                var decodedToken = await _firebaseAuthService.VerifyTokenAsync(request.IdToken);
+                var firebaseUserId = decodedToken.Uid;
+
+                // Update the password in Firebase
+                await _firebaseAuthService.ChangeUserPasswordAsync(firebaseUserId, request.NewPassword);
+
+                return Ok(new { Message = "Password changed successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Error = ex.Message });
+            }
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        {
+            try
+            {
+                await _firebaseAuthService.SendPasswordResetEmailAsync(request.Email);
+                return Ok(new { Message = "Password reset email sent successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Error = ex.Message });
+            }
+        }
+
 
     }
 
@@ -146,5 +181,15 @@ namespace Backend.Controllers
         public string IdToken { get; set; } = string.Empty;
     }
 
+    public class ChangePasswordRequest
+    {
+        public string IdToken { get; set; } = string.Empty; // The user's Firebase token
+        public string NewPassword { get; set; } = string.Empty; // The new password
+    }
+
+    public class ForgotPasswordRequest
+    {
+        public string Email { get; set; } = string.Empty;
+    }
 
 }

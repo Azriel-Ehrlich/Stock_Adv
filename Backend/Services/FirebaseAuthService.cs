@@ -86,5 +86,21 @@ namespace Backend.Services
                 return null; // Invalid token
             }
         }
+
+        public async Task ChangeUserPasswordAsync(string firebaseUserId, string newPassword)
+        {
+            var userRecordArgs = new UserRecordArgs
+            {
+                Uid = firebaseUserId,
+                Password = newPassword
+            };
+
+            await FirebaseAuth.DefaultInstance.UpdateUserAsync(userRecordArgs);
+        }
+        public async Task SendPasswordResetEmailAsync(string email)
+        {
+            await FirebaseAuth.DefaultInstance.GeneratePasswordResetLinkAsync(email);
+        }
+
     }
 }
