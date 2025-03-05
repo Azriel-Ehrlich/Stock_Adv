@@ -11,11 +11,14 @@ namespace Backend.Controllers
     {
         private readonly FirebaseAuthService _firebaseAuthService;
         private readonly UserService _userService;
+        private readonly CloudinaryService _cloudinaryService;
 
-        public UserController(FirebaseAuthService firebaseAuthService, UserService userService)
+
+        public UserController(FirebaseAuthService firebaseAuthService, UserService userService, CloudinaryService cloudinaryService)
         {
             _firebaseAuthService = firebaseAuthService;
             _userService = userService;
+            _cloudinaryService = cloudinaryService;
         }
 
         // Register new user with email & password
@@ -34,13 +37,29 @@ namespace Backend.Controllers
                     return Conflict("User already exists.");
                 }
 
-                // Step 3: Add user to database
+                string profilePictureUrl;
+
+                if (string.IsNullOrEmpty(request.ProfilePicture))
+                {
+                    // If no profile picture provided, use default
+                    profilePictureUrl = await _cloudinaryService.GetDefaultProfileImageAsync(request.Username);
+                }
+                else
+                {
+                    // User provided a profile picture URL (base64 data or external URL)
+                    // For base64 images, you would decode and upload here
+                    profilePictureUrl = request.ProfilePicture;
+
+                }
+
+
+                // Step 4: Add user to database
                 var newUser = new User
                 {
                     FirebaseUserId = firebaseUserId,
                     Username = request.Username,
                     Email = request.Email,
-                    ProfilePicture = request.ProfilePicture
+                    ProfilePicture = profilePictureUrl
                 };
 
                 await _userService.AddUserAsync(newUser);

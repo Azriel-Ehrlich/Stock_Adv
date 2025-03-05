@@ -14,6 +14,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // 🔹 Register services
 builder.Services.AddSingleton<FirebaseAuthService>(); // Firebase authentication service
 builder.Services.AddScoped<UserService>(); // User management service
+builder.Services.AddSingleton<CloudinaryService>(); // Cloudinary service
+builder.Services.AddHttpClient();
 
 // 🔹 Add controllers
 builder.Services.AddControllers();
