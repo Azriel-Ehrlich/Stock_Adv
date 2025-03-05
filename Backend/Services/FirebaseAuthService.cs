@@ -73,5 +73,18 @@ namespace Backend.Services
             using var doc = JsonDocument.Parse(jsonResponse);
             return doc.RootElement.GetProperty("idToken").GetString();
         }
+
+        //Verify Google Token for Authentication (New)
+        public async Task<FirebaseToken?> VerifyGoogleTokenAsync(string idToken)
+        {
+            try
+            {
+                return await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(idToken);
+            }
+            catch
+            {
+                return null; // Invalid token
+            }
+        }
     }
 }

@@ -87,6 +87,42 @@ namespace Backend.Controllers
                 return Unauthorized(new { Error = "Invalid credentials", Details = ex.Message });
             }
         }
+
+        // ✅ Login/Register with Google (New)
+        [HttpPost("login-google")]
+        public async Task<IActionResult> LoginWithGoogle([FromBody] GoogleLoginRequest request)
+        {
+            var decodedToken = await _firebaseAuthService.VerifyGoogleTokenAsync(request.IdToken);
+            if (decodedToken == null)
+            {
+                return Unauthorized("Invalid Google token.");
+            }
+
+            var firebaseUserId = decodedToken.Uid;
+            var email = decodedToken.Claims.ContainsKey("email") ? decodedToken.Claims["email"].ToString() : null;
+
+            if (email == null)
+            {
+                return BadRequest("Google account must have an email.");
+            }
+
+            // Check if user already exists
+            var user = await _userService.GetUserByFirebaseIdAsync(firebaseUserId);
+            if (user == null)
+            {
+                // Register new user
+                user = new User
+                {
+                    FirebaseUserId = firebaseUserId,
+                    Email = email
+                };
+
+                await _userService.AddUserAsync(user);
+            }
+
+            return Ok(user);
+        }
+
     }
 
     // Request model for user registration
@@ -104,4 +140,11 @@ namespace Backend.Controllers
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
     }
+    //Request model for Google Login
+    public class GoogleLoginRequest
+    {
+        public string IdToken { get; set; } = string.Empty;
+    }
+
+
 }
