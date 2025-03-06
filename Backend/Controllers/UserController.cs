@@ -109,39 +109,64 @@ namespace Backend.Controllers
         }
 
         // ✅ Login/Register with Google (New)
+        // Update this method in your UserController class
         [HttpPost("login-google")]
         public async Task<IActionResult> LoginWithGoogle([FromBody] GoogleLoginRequest request)
         {
-            var decodedToken = await _firebaseAuthService.VerifyGoogleTokenAsync(request.IdToken);
-            if (decodedToken == null)
+            try
             {
-                return Unauthorized("Invalid Google token.");
-            }
+                // Use the new method to handle Google authentication
+                var firebaseIdToken = await _firebaseAuthService.SignInWithGoogleTokenAsync(request.IdToken);
 
-            var firebaseUserId = decodedToken.Uid;
-            var email = decodedToken.Claims.ContainsKey("email") ? decodedToken.Claims["email"].ToString() : null;
+                // Verify the Firebase token
+                var decodedToken = await _firebaseAuthService.VerifyTokenAsync(firebaseIdToken);
+                var firebaseUserId = decodedToken.Uid;
 
-            if (email == null)
-            {
-                return BadRequest("Google account must have an email.");
-            }
+                // Get email from token claims
+                var email = decodedToken.Claims.ContainsKey("email") ? decodedToken.Claims["email"].ToString() : null;
 
-            // Check if user already exists
-            var user = await _userService.GetUserByFirebaseIdAsync(firebaseUserId);
-            if (user == null)
-            {
-                // Register new user
-                user = new User
+                if (email == null)
                 {
-                    FirebaseUserId = firebaseUserId,
-                    Email = email
-                };
+                    return BadRequest("Google account must have an email.");
+                }
 
-                await _userService.AddUserAsync(user);
+                // Check if user already exists in your database
+                var user = await _userService.GetUserByFirebaseIdAsync(firebaseUserId);
+                if (user == null)
+                {
+                    // Get name from token claims
+                    var name = decodedToken.Claims.ContainsKey("name") ? decodedToken.Claims["name"].ToString() : "User";
+
+                    // Register new user in your database
+                    user = new User
+                    {
+                        FirebaseUserId = firebaseUserId,
+                        Email = email,
+                        Username = name
+                    };
+
+                    await _userService.AddUserAsync(user);
+                }
+
+                // Return user data with token
+                return Ok(new
+                {
+                    user.Id,
+                    user.Username,
+                    user.Email,
+                    user.FirebaseUserId,
+                    user.ProfilePicture,
+                    Token = firebaseIdToken // Return the Firebase ID token
+                });
             }
-
-            return Ok(user);
+            catch (Exception ex)
+            {
+                return BadRequest(new { Error = ex.Message });
+            }
         }
+
+
+
         [HttpPost("change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
         {
