@@ -201,6 +201,29 @@ namespace Backend.Controllers
             }
         }
 
+        [HttpGet("{firebaseId}")]
+        public async Task<IActionResult> GetUser(string firebaseId)
+        {
+            var user = await _userService.GetUser(firebaseId);
+            if (user == null) return NotFound("User not found");
+            return Ok(user);
+        }
+
+
+        [HttpGet("{firebaseId}/stocks")]
+        public async Task<IActionResult> GetUserStocks(string firebaseId)
+        {
+            var stocks = await _userService.GetUserStocks(firebaseId);
+            return Ok(stocks);
+        }
+
+        [HttpGet("{firebaseId}/transactions")]
+        public async Task<IActionResult> GetUserTransactions(string firebaseId)
+        {
+            var transactions = await _userService.GetUserTransactions(firebaseId);
+            return Ok(transactions);
+        }
+
 
     }
 

@@ -60,5 +60,54 @@ namespace Backend.Services
             await _context.SaveChangesAsync();
             return true;
         }
+
+        // Get user details
+        public async Task<UserDto> GetUser(string firebaseId)
+        {
+            var user = await _context.Users
+                .Where(u => u.FirebaseUserId == firebaseId)
+                .Select(u => new UserDto
+                {
+                    Username = u.Username,
+                    Email = u.Email
+                })
+                .FirstOrDefaultAsync();
+
+            return user;
+        }
+
+        // Get all stocks owned by a user
+        public async Task<List<UserStockDto>> GetUserStocks(string firebaseId)
+        {
+            var stocks = await _context.UserStocks
+                .Where(us => us.User.FirebaseUserId == firebaseId)
+                .Select(us => new UserStockDto
+                {
+                    StockSymbol = us.StockSymbol,
+                    Quantity = us.Quantity
+                })
+                .ToListAsync();
+
+            return stocks;
+        }
+        // Get all transactions for a user
+        public async Task<List<TransactionDto>> GetUserTransactions(string firebaseId)
+        {
+            var transactions = await _context.Transactions
+                .Where(t => t.User.FirebaseUserId == firebaseId)
+                .Select(t => new TransactionDto
+                {
+                    StockSymbol = t.StockSymbol,
+                    Quantity = t.Quantity,
+                    TransactionType = t.IsPurchase ? "Buy" : "Sell",
+                    Price = t.Price,
+                    Date = t.TransactionDate
+                })
+                .ToListAsync();
+
+            return transactions;
+        }
+
+
     }
 }
