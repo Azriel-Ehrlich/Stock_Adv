@@ -69,7 +69,8 @@ namespace Backend.Services
                 .Select(u => new UserDto
                 {
                     Username = u.Username,
-                    Email = u.Email
+                    Email = u.Email,
+                   ProfilePicture = u.ProfilePicture
                 })
                 .FirstOrDefaultAsync();
 

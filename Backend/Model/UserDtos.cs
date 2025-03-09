@@ -2,6 +2,7 @@
 {
     public string Username { get; set; }
     public string Email { get; set; }
+    public string? ProfilePicture { get; set; }
 }
 
 public class UserStockDto

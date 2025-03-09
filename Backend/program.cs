@@ -16,6 +16,7 @@ builder.Services.AddSingleton<FirebaseAuthService>(); // Firebase authentication
 builder.Services.AddScoped<UserService>(); // User management service
 builder.Services.AddSingleton<CloudinaryService>(); // Cloudinary service
 builder.Services.AddHttpClient();
+builder.Services.AddScoped<StockService>();
 
 // 🔹 Add controllers
 builder.Services.AddControllers();
