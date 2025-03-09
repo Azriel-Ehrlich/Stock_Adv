@@ -16,18 +16,29 @@ namespace Backend.Controllers
             _stockService = stockService;
         }
 
-        //Fetch stock data for multiple tickers
         [HttpPost("prices")]
         public async Task<IActionResult> GetStockPrices([FromBody] StockRequest request)
         {
             var stockPrices = await _stockService.GetStockPricesAsync(request.Tickers);
             return Ok(stockPrices);
         }
+
+        //Search for stock symbol by company name
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchStock([FromQuery] string query)
+        {
+            var symbol = await _stockService.SearchStockSymbolAsync(query);
+            if (symbol == null)
+            {
+                return NotFound("Stock not found.");
+            }
+
+            return Ok(new { Symbol = symbol });
+        }
     }
 
-    //Model for API request
     public class StockRequest
     {
-        public List<string> Tickers { get; set; } = new();
+        public List<string> Tickers { get; set; } = new List<string>();
     }
 }

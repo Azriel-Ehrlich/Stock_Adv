@@ -1,75 +1,82 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Collections.Generic;
+using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System.Collections.Generic;
+using YahooFinanceApi;
 
 namespace Backend.Services
 {
     public class StockService
     {
-        private readonly HttpClient _httpClient;
-        private readonly string _apiKey;
 
-        public StockService(IHttpClientFactory httpClientFactory, IConfiguration configuration)
+        private readonly HttpClient _httpClient;
+        private const string YahooSearchUrl = "https://query2.finance.yahoo.com/v1/finance/search?q=";
+
+        public StockService(HttpClient httpClient)
         {
-            _httpClient = httpClientFactory.CreateClient();
-            _apiKey = configuration["Polygon:ApiKey"]; //we will read the api key from appsettings.json
+            _httpClient = httpClient;
         }
 
-        //Fetch stock data for multiple tickers
-        public async Task<List<StockData>> GetStockPricesAsync(List<string> tickers)
+        //Search stock symbol by name (e.g., "Apple" -> "AAPL")
+        public async Task<string?> SearchStockSymbolAsync(string query)
         {
-            var symbols = string.Join(",", tickers);
-            var url = $"https://api.polygon.io/v2/snapshot/locale/us/markets/stocks/tickers?apiKey={_apiKey}";
+            // add user agent to avoid errors
+            _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
 
-            var response = await _httpClient.GetAsync(url);
+            var response = await _httpClient.GetAsync($"{YahooSearchUrl}{query}&quotesCount=1&newsCount=0");
+
             if (!response.IsSuccessStatusCode)
             {
-                throw new Exception("Failed to fetch stock data from Polygon.io");
+              
+                throw new Exception("Failed to fetch stock data from Yahoo Finance.");
             }
 
             var jsonResponse = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<PolygonStockResponse>(jsonResponse);
+            using var doc = JsonDocument.Parse(jsonResponse);
 
-            var stockList = new List<StockData>();
-
-            foreach (var stock in result.Tickers)
+            if (doc.RootElement.TryGetProperty("quotes", out var quotes) && quotes.GetArrayLength() > 0)
             {
-                if (tickers.Contains(stock.Ticker))
-                {
-                    stockList.Add(new StockData
-                    {
-                        Symbol = stock.Ticker,
-                        Price = stock.LastTrade.Price
-                    });
-                }
+                var firstResult = quotes[0];
+                return firstResult.TryGetProperty("symbol", out var symbol) ? symbol.GetString() : null;
             }
 
-            return stockList;
+            return null;
         }
-    }
 
-    //Model for Stock Data
-    public class StockData
-    {
-        public string Symbol { get; set; } = string.Empty;
-        public decimal Price { get; set; }
-    }
 
-    //Model for Polygon API Response
-    public class PolygonStockResponse
-    {
-        public List<PolygonStock> Tickers { get; set; } = new();
-    }
 
-    public class PolygonStock
-    {
-        public string Ticker { get; set; } = string.Empty;
-        public PolygonLastTrade LastTrade { get; set; } = new();
-    }
+        //Get stock prices for a list of tickers
+        public async Task<Dictionary<string, decimal>> GetStockPricesAsync(List<string> tickers)
+        {
+            var stockPrices = new Dictionary<string, decimal>();
 
-    public class PolygonLastTrade
-    {
-        public decimal Price { get; set; }
+            try
+            {
+                // Fetch stock data for the requested tickers
+                var securities = await Yahoo.Symbols(tickers.ToArray())
+                                           .Fields(Field.RegularMarketPrice)
+                                           .QueryAsync();
+
+                foreach (var ticker in tickers)
+                {
+                    if (securities.ContainsKey(ticker))
+                    {
+                        var price = securities[ticker][Field.RegularMarketPrice];
+                        stockPrices[ticker] = Convert.ToDecimal(price);
+                    }
+                    else
+                    {
+                        stockPrices[ticker] = -1; // If stock not found
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching stock prices: {ex.Message}");
+            }
+
+            return stockPrices;
+        }
     }
 }

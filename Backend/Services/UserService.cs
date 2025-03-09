@@ -73,6 +73,7 @@ namespace Backend.Services
                    ProfilePicture = u.ProfilePicture
                 })
                 .FirstOrDefaultAsync();
+            Console.WriteLine($"Returned User: {user?.Username}, {user?.Email}, {user?.ProfilePicture}"); // 🔹 בדיקה
 
             return user;
         }
