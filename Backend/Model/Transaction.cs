@@ -23,7 +23,7 @@ namespace Backend.Models
         public decimal Price { get; set; } // Price per stock at the time of transaction
 
         [Required]
-        public DateTime TransactionDate { get; set; } = DateTime.UtcNow; // Timestamp of the transaction
+        public DateTime TransactionDate { get; set; } = DateTime.UtcNow.ToLocalTime(); // Timestamp of the transaction
 
         [Required]
         public bool IsPurchase { get; set; } // True for buy, False for sell

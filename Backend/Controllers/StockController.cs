@@ -23,22 +23,59 @@ namespace Backend.Controllers
             return Ok(stockPrices);
         }
 
-        //Search for stock symbol by company name
+        // Search for stock symbol by company name
         [HttpGet("search")]
         public async Task<IActionResult> SearchStock([FromQuery] string query)
         {
             var symbol = await _stockService.SearchStockSymbolAsync(query);
             if (symbol == null)
             {
-                return NotFound("Stock not found.");
+                return NotFound(new { Error = "Stock not found." });
             }
 
             return Ok(new { Symbol = symbol });
+        }
+
+        // Buy stock
+        [HttpPost("buy")]
+        public async Task<IActionResult> BuyStock([FromBody] BuySellRequest request)
+        {
+            try
+            {
+                await _stockService.BuyStockAsync(request.FirebaseUserId, request.StockSymbol, request.Quantity);
+                return Ok(new { Message = "Stock purchased successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Error = ex.Message });
+            }
+        }
+
+        // Sell stock
+        [HttpPost("sell")]
+        public async Task<IActionResult> SellStock([FromBody] BuySellRequest request)
+        {
+            try
+            {
+                await _stockService.SellStockAsync(request.FirebaseUserId, request.StockSymbol, request.Quantity);
+                return Ok(new { Message = "Stock sold successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Error = ex.Message });
+            }
         }
     }
 
     public class StockRequest
     {
         public List<string> Tickers { get; set; } = new List<string>();
+    }
+
+    public class BuySellRequest
+    {
+        public string FirebaseUserId { get; set; } = string.Empty;
+        public string StockSymbol { get; set; } = string.Empty;
+        public int Quantity { get; set; }
     }
 }
