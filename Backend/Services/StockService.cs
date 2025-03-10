@@ -50,7 +50,9 @@ namespace Backend.Services
             {
                 var securities = await Yahoo.Symbols(tickers.ToArray())
                                             .Fields(Field.RegularMarketPrice, Field.RegularMarketOpen, Field.RegularMarketDayHigh,
-                                                    Field.RegularMarketDayLow, Field.RegularMarketPreviousClose, Field.RegularMarketChangePercent)
+                                                    Field.RegularMarketDayLow, Field.RegularMarketPreviousClose, Field.RegularMarketChangePercent,
+                                                    Field.RegularMarketVolume, Field.MarketCap, Field.TrailingPE,
+                                                    Field.EpsTrailingTwelveMonths, Field.LongName,Field.TrailingAnnualDividendRate)
                                             .QueryAsync();
 
                 foreach (var ticker in tickers)
@@ -59,12 +61,25 @@ namespace Backend.Services
                     {
                         stockData[ticker] = new StockDto
                         {
+                            Symbol = ticker,
+                            Name = securities[ticker][Field.LongName], // Fetch company name
                             CurrentPrice = Convert.ToDecimal(securities[ticker][Field.RegularMarketPrice]),
                             OpenPrice = Convert.ToDecimal(securities[ticker][Field.RegularMarketOpen]),
                             HighPrice = Convert.ToDecimal(securities[ticker][Field.RegularMarketDayHigh]),
                             LowPrice = Convert.ToDecimal(securities[ticker][Field.RegularMarketDayLow]),
                             PreviousClose = Convert.ToDecimal(securities[ticker][Field.RegularMarketPreviousClose]),
-                            ChangePercent = Convert.ToDecimal(securities[ticker][Field.RegularMarketChangePercent])
+                            ChangePercent = Convert.ToDecimal(securities[ticker][Field.RegularMarketChangePercent]),
+                            Volume =  Convert.ToInt64(securities[ticker][Field.RegularMarketVolume]).ToString("N0"), // Format volume with commas
+                            MarketCap =  $"{Convert.ToDecimal(securities[ticker][Field.MarketCap]) / 1_000_000_000:N1}B", // Format market cap in billions
+                              
+                            PE = Convert.ToDecimal(securities[ticker][Field.TrailingPE]).ToString("N1"),
+               
+                            EPS = Convert.ToDecimal(securities[ticker][Field.EpsTrailingTwelveMonths]).ToString("N2"),
+                                
+                            Dividend = Convert.ToDecimal(securities[ticker][Field.TrailingAnnualDividendRate]).ToString("N2"),
+                               
+                            YearLow = Convert.ToDecimal(securities[ticker][Field.RegularMarketDayLow]) * 0.8m,  // Estimated
+                            YearHigh = Convert.ToDecimal(securities[ticker][Field.RegularMarketDayHigh]) * 1.2m  // Estimated
                         };
                     }
                 }
@@ -76,6 +91,7 @@ namespace Backend.Services
 
             return stockData;
         }
+
 
 
 

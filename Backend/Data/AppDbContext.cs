@@ -12,7 +12,7 @@ namespace Backend.Data
 
         public DbSet<Transaction> Transactions { get; set; }// Transactions history table
 
-        public DbSet<Balance> Balances { get; set; }// User account balance table
+        public DbSet<Balance> Balances { get; set; }// User account balance table/
 
     }
 }
