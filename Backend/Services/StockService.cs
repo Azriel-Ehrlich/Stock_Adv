@@ -42,36 +42,44 @@ namespace Backend.Services
         }
 
         // Get stock prices for a list of tickers
-        public async Task<Dictionary<string, decimal>> GetStockPricesAsync(List<string> tickers)
+        public async Task<Dictionary<string, StockDto>> GetStockPricesAsync(List<string> tickers)
         {
-            var stockPrices = new Dictionary<string, decimal>();
+            var stockData = new Dictionary<string, StockDto>();
 
             try
             {
                 var securities = await Yahoo.Symbols(tickers.ToArray())
-                                           .Fields(Field.RegularMarketPrice)
-                                           .QueryAsync();
+                                            .Fields(Field.RegularMarketPrice, Field.RegularMarketOpen, Field.RegularMarketDayHigh,
+                                                    Field.RegularMarketDayLow, Field.RegularMarketPreviousClose, Field.RegularMarketChangePercent)
+                                            .QueryAsync();
 
                 foreach (var ticker in tickers)
                 {
                     if (securities.ContainsKey(ticker))
                     {
-                        var price = securities[ticker][Field.RegularMarketPrice];
-                        stockPrices[ticker] = Convert.ToDecimal(price);
-                    }
-                    else
-                    {
-                        stockPrices[ticker] = -1; // If stock not found
+                        stockData[ticker] = new StockDto
+                        {
+                            CurrentPrice = Convert.ToDecimal(securities[ticker][Field.RegularMarketPrice]),
+                            OpenPrice = Convert.ToDecimal(securities[ticker][Field.RegularMarketOpen]),
+                            HighPrice = Convert.ToDecimal(securities[ticker][Field.RegularMarketDayHigh]),
+                            LowPrice = Convert.ToDecimal(securities[ticker][Field.RegularMarketDayLow]),
+                            PreviousClose = Convert.ToDecimal(securities[ticker][Field.RegularMarketPreviousClose]),
+                            ChangePercent = Convert.ToDecimal(securities[ticker][Field.RegularMarketChangePercent])
+                        };
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error fetching stock prices: {ex.Message}");
+                Console.WriteLine($"Error fetching stock data: {ex.Message}");
             }
 
-            return stockPrices;
+            return stockData;
         }
+
+
+
+
 
         //Buy stock (Adds to user portfolio & transaction history)
         public async Task<bool> BuyStockAsync(string firebaseId, string stockSymbol, int quantity)
@@ -83,12 +91,12 @@ namespace Backend.Services
             }
 
             var stockPrices = await GetStockPricesAsync(new List<string> { stockSymbol });
-            if (!stockPrices.ContainsKey(stockSymbol) || stockPrices[stockSymbol] <= 0)
+            if (!stockPrices.ContainsKey(stockSymbol) || stockPrices[stockSymbol].CurrentPrice <= 0)
             {
                 throw new Exception("Invalid stock symbol or unable to fetch stock price.");
             }
 
-            decimal stockPrice = stockPrices[stockSymbol];
+            decimal stockPrice = stockPrices[stockSymbol].CurrentPrice;
             decimal totalCost = stockPrice * quantity;
 
             var balance = await _context.Balances.FirstOrDefaultAsync(b => b.UserId == user.Id);
@@ -148,12 +156,12 @@ namespace Backend.Services
             }
 
             var stockPrices = await GetStockPricesAsync(new List<string> { stockSymbol });
-            if (!stockPrices.ContainsKey(stockSymbol) || stockPrices[stockSymbol] <= 0)
+            if (!stockPrices.ContainsKey(stockSymbol) || stockPrices[stockSymbol].CurrentPrice <= 0)
             {
                 throw new Exception("Invalid stock symbol or unable to fetch stock price.");
             }
 
-            decimal stockPrice = stockPrices[stockSymbol];
+            decimal stockPrice = stockPrices[stockSymbol].CurrentPrice;
             decimal totalSaleValue = stockPrice * quantity;
 
             var userStock = await _context.UserStocks.FirstOrDefaultAsync(us => us.UserId == user.Id && us.StockSymbol == stockSymbol);
