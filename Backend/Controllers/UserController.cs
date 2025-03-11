@@ -61,8 +61,12 @@ namespace Backend.Controllers
                     Email = request.Email,
                     ProfilePicture = profilePictureUrl
                 };
-
+                // Add user to the database
                 await _userService.AddUserAsync(newUser);
+
+                //Create initial balance for the new user
+                await _userService.AddUserBalanceAsync(newUser.Id);
+
                 return Ok(new { UserId = firebaseUserId, Message = "User created successfully" });
             }
             catch (Exception ex)
@@ -108,7 +112,7 @@ namespace Backend.Controllers
             }
         }
 
-        // ✅ Login/Register with Google (New)
+        //Login/Register with Google (New)
         // Update this method in your UserController class
         [HttpPost("login-google")]
         public async Task<IActionResult> LoginWithGoogle([FromBody] GoogleLoginRequest request)
@@ -132,6 +136,7 @@ namespace Backend.Controllers
 
                 // Check if user already exists in your database
                 var user = await _userService.GetUserByFirebaseIdAsync(firebaseUserId);
+                // if user does not exist, create a new user
                 if (user == null)
                 {
                     // Get name from token claims
@@ -145,7 +150,11 @@ namespace Backend.Controllers
                         Username = name
                     };
 
+                    // add the user to the database
                     await _userService.AddUserAsync(user);
+
+                    //Create initial balance for the new user
+                    await _userService.AddUserBalanceAsync(user.Id);
                 }
 
                 // Return user data with token
@@ -225,6 +234,36 @@ namespace Backend.Controllers
         }
 
 
+        //Get user balance
+        [HttpGet("balance/{firebaseUserId}")]
+        public async Task<IActionResult> GetUserBalance(string firebaseUserId)
+        {
+            try
+            {
+                var balance = await _userService.GetUserBalanceAsync(firebaseUserId);
+                return Ok(new { Balance = balance });
+            }
+            catch (Exception ex)
+            {
+                return NotFound(new { Error = ex.Message });
+            }
+        }
+
+        //Update user balance
+        [HttpPost("balance/update")]
+        public async Task<IActionResult> UpdateUserBalance([FromBody] UpdateBalanceRequest request)
+        {
+            var success = await _userService.UpdateUserBalanceAsync(request.FirebaseUserId, request.AmountChange);
+            if (!success)
+            {
+                return BadRequest("Failed to update balance.");
+            }
+
+            return Ok(new { Message = "Balance updated successfully" });
+        }
+
+
+
     }
 
     // Request model for user registration
@@ -257,6 +296,13 @@ namespace Backend.Controllers
     public class ForgotPasswordRequest
     {
         public string Email { get; set; } = string.Empty;
+    }
+
+    //Request model for balance update
+    public class UpdateBalanceRequest
+    {
+        public string FirebaseUserId { get; set; } = string.Empty;
+        public decimal AmountChange { get; set; }
     }
 
 }

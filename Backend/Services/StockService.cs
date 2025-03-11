@@ -134,7 +134,7 @@ namespace Backend.Services
                 StockSymbol = stockSymbol,
                 Quantity = quantity,
                 Price = stockPrice,
-                TransactionDate = DateTime.UtcNow,
+                TransactionDate = DateTime.UtcNow.ToLocalTime(),
                 IsPurchase = true
             };
 

@@ -111,5 +111,51 @@ namespace Backend.Services
         }
 
 
+        //Get user balance
+        public async Task<decimal> GetUserBalanceAsync(string firebaseUserId)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.FirebaseUserId == firebaseUserId);
+            if (user == null)
+            {
+                throw new Exception("User not found.");
+            }
+
+            var balance = await _context.Balances.FirstOrDefaultAsync(b => b.UserId == user.Id);
+            return balance?.Amount ?? 0;
+        }
+
+        //Update user balance
+        public async Task<bool> UpdateUserBalanceAsync(string firebaseUserId, decimal amountChange)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.FirebaseUserId == firebaseUserId);
+            if (user == null)
+            {
+                throw new Exception("User not found.");
+            }
+
+            var balance = await _context.Balances.FirstOrDefaultAsync(b => b.UserId == user.Id);
+            if (balance == null)
+            {
+                return false;
+            }
+
+            balance.Amount += amountChange;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        //Create initial balance when registering a new user
+        public async Task AddUserBalanceAsync(int userId)
+        {
+            var newBalance = new Balance
+            {
+                UserId = userId,
+                Amount = 0 // Initial balance
+            };
+
+            _context.Balances.Add(newBalance);
+            await _context.SaveChangesAsync();
+        }
+
     }
 }
