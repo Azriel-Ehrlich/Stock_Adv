@@ -15,8 +15,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddSingleton<FirebaseAuthService>(); // Firebase authentication service
 builder.Services.AddScoped<UserService>(); // User management service
 builder.Services.AddSingleton<CloudinaryService>(); // Cloudinary service
+builder.Services.AddScoped<StockService>(); // Stock data service
+builder.Services.AddSingleton<QdrantService>();
+builder.Services.AddHttpClient<OllamaService>();
 builder.Services.AddHttpClient();
-builder.Services.AddScoped<StockService>();
 
 // 🔹 Add controllers
 builder.Services.AddControllers();
