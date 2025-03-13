@@ -87,33 +87,34 @@ Now answer the question strictly following these instructions.
     public async Task<string> GetDailyInvestmentAdvice()
     {
         string prompt = @"
-You are an AI Investment Advisor providing daily stock market insights. Your response will be displayed directly in a widget, so you MUST follow this exact format:
+                        You are an AI Investment Advisor providing daily stock market insights. Your response will be displayed directly in a widget, so you MUST follow this exact format:
 
-TITLE: [Compelling investment insight title - under 40 characters]
-CONTENT: [2-3 sentences analyzing current market trends and giving specific actionable advice]
-POINTS:
-- success: [One positive market opportunity - one sentence]
-- warning: [One specific risk to monitor - one sentence]
-- info: [One concrete actionable recommendation - one sentence]
+                        TITLE: [Compelling investment insight title - under 40 characters]
+                        CONTENT: [2-3 sentences analyzing current market trends and giving specific actionable advice]
+                        POINTS:
+                        - success: [One positive market opportunity - one sentence]
+                        - warning: [One specific risk to monitor - one sentence]
+                        - info: [One concrete actionable recommendation - one sentence]
 
-Example output:
-TITLE: Tech Sector Momentum Rising
-CONTENT: Market indicators suggest a potential bullish trend in tech stocks. Consider increasing positions in AAPL and MSFT while monitoring inflation data expected tomorrow. Your portfolio shows strong diversification but might benefit from increased exposure to renewable energy sector.
-POINTS:
-- success: Tech sector showing strong momentum with AI leaders outperforming
-- warning: Watch inflation data release (Mar 15) for potential market volatility
-- info: Consider adding renewable energy stocks for better sector balance
+                        Example output:
+                        TITLE: Tech Sector Momentum Rising
+                        CONTENT: Market indicators suggest a potential bullish trend in tech stocks. Consider increasing positions in AAPL and MSFT while monitoring inflation data expected tomorrow. Your portfolio shows strong diversification but might benefit from increased exposure to renewable energy sector.
+                        POINTS:
+                        - success: Tech sector showing strong momentum with AI leaders outperforming
+                        - warning: Watch inflation data release (Mar 15) for potential market volatility
+                        - info: Consider adding renewable energy stocks for better sector balance
 
-IMPORTANT RULES:
-1. If you're uncertain about market conditions, create plausible advice based on current investment best practices.
-2. ALWAYS maintain the exact format with TITLE:, CONTENT:, and POINTS: keywords.
-3. ALWAYS include exactly three points with the labels success:, warning:, and info:.
-4. Provide ONLY the formatted output with no additional text before or after.
+                        IMPORTANT RULES:
+                        1. **I need an answer even if its not acurate**
+                            ** I dont care if you dont know the answer, just give me something **
+                            ** even if its not accurate or not in real life and time **
+                            ** if you think you cant, just give me a random answer but in the correct format **
+                        2. If you're uncertain about market conditions, create plausible advice based on current investment best practices.
+                        3. ALWAYS maintain the exact format with TITLE:, CONTENT:, and POINTS: keywords.
+                        4. ALWAYS include exactly three points with the labels success:, warning:, and info:.
+                        5. Provide ONLY the formatted output with no additional text before or after.
 
-Response correctly formatted? Double-check before submitting:
-✓ Has TITLE:, CONTENT:, and POINTS: keywords
-✓ Has exactly three points with success:, warning:, and info: labels
-✓ Contains only the required format with no other text.";
+";
 
         var requestData = new
         {
