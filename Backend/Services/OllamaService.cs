@@ -82,4 +82,54 @@ Now answer the question strictly following these instructions.
         // Extracting the response from the JSON
         return doc.RootElement.GetProperty("response").GetString();
     }
+
+
+    public async Task<string> GetDailyInvestmentAdvice()
+    {
+        string prompt = @"
+You are an AI Investment Advisor providing daily stock market insights. Your response will be displayed directly in a widget, so you MUST follow this exact format:
+
+TITLE: [Compelling investment insight title - under 40 characters]
+CONTENT: [2-3 sentences analyzing current market trends and giving specific actionable advice]
+POINTS:
+- success: [One positive market opportunity - one sentence]
+- warning: [One specific risk to monitor - one sentence]
+- info: [One concrete actionable recommendation - one sentence]
+
+Example output:
+TITLE: Tech Sector Momentum Rising
+CONTENT: Market indicators suggest a potential bullish trend in tech stocks. Consider increasing positions in AAPL and MSFT while monitoring inflation data expected tomorrow. Your portfolio shows strong diversification but might benefit from increased exposure to renewable energy sector.
+POINTS:
+- success: Tech sector showing strong momentum with AI leaders outperforming
+- warning: Watch inflation data release (Mar 15) for potential market volatility
+- info: Consider adding renewable energy stocks for better sector balance
+
+IMPORTANT RULES:
+1. If you're uncertain about market conditions, create plausible advice based on current investment best practices.
+2. ALWAYS maintain the exact format with TITLE:, CONTENT:, and POINTS: keywords.
+3. ALWAYS include exactly three points with the labels success:, warning:, and info:.
+4. Provide ONLY the formatted output with no additional text before or after.
+
+Response correctly formatted? Double-check before submitting:
+✓ Has TITLE:, CONTENT:, and POINTS: keywords
+✓ Has exactly three points with success:, warning:, and info: labels
+✓ Contains only the required format with no other text.";
+
+        var requestData = new
+        {
+            model = "gemma:2b", // ניתן לשנות בהתאם למודל הזמין
+            prompt = prompt,
+            stream = false
+        };
+
+        var json = JsonSerializer.Serialize(requestData);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await _httpClient.PostAsync("http://localhost:11434/api/generate", content);
+        var jsonResponse = await response.Content.ReadAsStringAsync();
+
+        using var doc = JsonDocument.Parse(jsonResponse);
+        return doc.RootElement.GetProperty("response").GetString();
+    }
+
 }

@@ -35,6 +35,15 @@ public class RagController : ControllerBase
 
         return Ok(new { Answer = response });
     }
+    
+    // Get daily investment advice
+    [HttpGet("daily-advice")]
+    public async Task<IActionResult> GetDailyAdvice()
+    {
+        string advice = await _ollamaService.GetDailyInvestmentAdvice();
+        return Ok(new { Advice = advice });
+    }
+
 }
 
 // Model for request body
