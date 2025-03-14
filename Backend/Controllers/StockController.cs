@@ -65,6 +65,14 @@ namespace Backend.Controllers
                 return BadRequest(new { Error = ex.Message });
             }
         }
+
+        [HttpGet("history")]
+        public async Task<IActionResult> GetStockHistory(string ticker, DateTime startDate, DateTime endDate)
+        {
+            var historyData = await _stockService.GetStockHistoryAsync(ticker, startDate, endDate);
+            return Ok(historyData);
+        }
+
     }
 
     public class StockRequest

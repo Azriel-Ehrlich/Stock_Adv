@@ -216,5 +216,63 @@ namespace Backend.Services
             return true;
         }
 
+
+        public async Task<List<StockHistoryDto>> GetStockHistoryAsync(string ticker, DateTime startDate, DateTime endDate)
+        {
+            var historyData = new List<StockHistoryDto>();
+
+            try
+            {
+                _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
+
+                // Convert dates to UNIX timestamps (seconds since 1970)
+                long startUnix = ((DateTimeOffset)startDate).ToUnixTimeSeconds();
+                long endUnix = ((DateTimeOffset)endDate).ToUnixTimeSeconds();
+
+                // Constructing the API request URL
+                string url = $"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?period1={startUnix}&period2={endUnix}&interval=1wk";
+
+                HttpResponseMessage response = await _httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode(); // Throws an error if the status is not 200
+
+                string responseBody = await response.Content.ReadAsStringAsync();
+                using JsonDocument doc = JsonDocument.Parse(responseBody);
+
+                // Extracting data from JSON response
+                var root = doc.RootElement;
+                var chart = root.GetProperty("chart");
+                var result = chart.GetProperty("result")[0];
+                var timestamps = result.GetProperty("timestamp");
+                var indicators = result.GetProperty("indicators").GetProperty("quote")[0];
+
+                var opens = indicators.GetProperty("open").EnumerateArray();
+                var closes = indicators.GetProperty("close").EnumerateArray();
+                var highs = indicators.GetProperty("high").EnumerateArray();
+                var lows = indicators.GetProperty("low").EnumerateArray();
+                var volumes = indicators.GetProperty("volume").EnumerateArray();
+
+                foreach (var timestamp in timestamps.EnumerateArray())
+                {
+                    historyData.Add(new StockHistoryDto
+                    {
+                        Date = (DateTimeOffset.FromUnixTimeSeconds(timestamp.GetInt64()).UtcDateTime).ToString("dd/MM/yy"), // Store as DateTime
+                        Open = opens.MoveNext() ? Convert.ToDecimal(opens.Current.GetDouble()) : 0,
+                        Close = closes.MoveNext() ? Convert.ToDecimal(closes.Current.GetDouble()) : 0,
+                        High = highs.MoveNext() ? Convert.ToDecimal(highs.Current.GetDouble()) : 0,
+                        Low = lows.MoveNext() ? Convert.ToDecimal(lows.Current.GetDouble()) : 0,
+                        Volume = volumes.MoveNext() ? Convert.ToInt64(volumes.Current.GetDouble()) : 0
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching historical data: {ex.Message}");
+            }
+
+            return historyData;
+        }
+
     }
 }
+
+
