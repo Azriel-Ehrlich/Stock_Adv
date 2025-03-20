@@ -118,7 +118,7 @@ Now answer the question strictly following these instructions.
 
         var requestData = new
         {
-            model = "gemma:2b", // ניתן לשנות בהתאם למודל הזמין
+            model = "gemma:2b", 
             prompt = prompt,
             stream = false
         };
