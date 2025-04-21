@@ -362,12 +362,13 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd# Configuration files containing sensitive information
 appsettings.json
+secrets.json
+FodyWeavers.xsd# Configuration files containing sensitive information
+appsettings.json
 # Configuration files containing sensitive information
 appsettings.json
 secrets.json
 firebaseConfig.json
 secrets.json
 # Firebase configuration files
-firebaseConfig.js
-google-services.json
 /Backend/Config/firebase-adminsdk.json
